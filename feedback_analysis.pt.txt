@@ -1,0 +1,34 @@
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+def generate_wordcloud(df):
+    track = st.selectbox("📌 Select Track for Word Cloud", df["Track"].unique())
+    feedback_text = " ".join(df[df["Track"] == track]["Feedback"])
+    
+    wordcloud = WordCloud(width=800, height=400, background_color="white").generate(feedback_text)
+    
+    st.subheader(f"📝 Word Cloud for {track}")
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation="bilinear")
+    plt.axis("off")
+    st.pyplot(plt)
+
+def analyze_text_similarity(df):
+    track = st.selectbox("🔍 Select Track for Feedback Similarity", df["Track"].unique(), key="similarity")
+    
+    tfidf = TfidfVectorizer()
+    feedback_tfidf = tfidf.fit_transform(df[df["Track"] == track]["Feedback"])
+    similarity_matrix = cosine_similarity(feedback_tfidf)
+    
+    st.write("🔗 **Most Similar Feedback Pairs:**")
+    feedbacks = df[df["Track"] == track]["Feedback"].tolist()
+    
+    for i in range(5):
+        st.write(f"**Feedback {i+1}:** {feedbacks[i]}")
+        similar_idx = similarity_matrix[i].argsort()[-2]
+        st.write(f"**Most Similar Feedback:** {feedbacks[similar_idx]}")
+        st.write("------")
